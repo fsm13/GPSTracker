@@ -1,9 +1,12 @@
 package my.newapp.fsm.gpstracker
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import my.newapp.fsm.gpstracker.databinding.ActivityMainBinding
+import my.newapp.fsm.gpstracker.fragments.MainFragment
+import my.newapp.fsm.gpstracker.fragments.SettingsFragment
+import my.newapp.fsm.gpstracker.fragments.TracksFragment
+import my.newapp.fsm.gpstracker.utils.openFragment
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
@@ -13,15 +16,16 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         onClickBNav()
+        openFragment(MainFragment.newInstance())
     }
 
 
     private fun onClickBNav() {
         binding.bNav.setOnItemSelectedListener {
-            when(it.itemId) {
-                R.id.id_home -> {}
-                R.id.id_tracks -> {}
-                R.id.id_settings -> {}
+            when (it.itemId) {
+                R.id.id_home -> openFragment(MainFragment.newInstance())
+                R.id.id_tracks -> openFragment(TracksFragment.newInstance())
+                R.id.id_settings -> openFragment(SettingsFragment())
             }
             true
         }
