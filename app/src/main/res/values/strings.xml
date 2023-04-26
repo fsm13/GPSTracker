@@ -12,4 +12,5 @@
     <string name="dialog_message">Do you want enable GPS?</string>
     <string name="yes">YES</string>
     <string name="no">NO</string>
+    <string name="tracker_running">Tracker running...</string>
 </resources>
