@@ -2,8 +2,11 @@ package my.newapp.fsm.gpstracker.fragments
 
 import android.Manifest
 import android.content.Context
+import android.content.Intent
+import android.location.LocationManager
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -14,6 +17,7 @@ import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import my.newapp.fsm.gpstracker.databinding.FragmentMainBinding
+import my.newapp.fsm.gpstracker.utils.DialogManager
 import my.newapp.fsm.gpstracker.utils.checkPermission
 import org.osmdroid.config.Configuration
 import org.osmdroid.library.BuildConfig
@@ -36,6 +40,10 @@ class MainFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         registerPermission()
+    }
+
+    override fun onResume() {
+        super.onResume()
         checkLocPermission()
     }
 
@@ -65,6 +73,7 @@ class MainFragment : Fragment() {
         ) {
             if (it[Manifest.permission.ACCESS_FINE_LOCATION] == true) {
                 initOsm()
+                checkLocationEnabled()
             } else {
                 Toast.makeText(
                     activity,
@@ -89,6 +98,7 @@ class MainFragment : Fragment() {
             checkPermission(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
         ) {
             initOsm()
+            checkLocationEnabled()
         } else {
             pLauncher.launch(
                 arrayOf(
@@ -102,10 +112,27 @@ class MainFragment : Fragment() {
     private fun checkPermission10Lower() {
         if (checkPermission(Manifest.permission.ACCESS_FINE_LOCATION)) {
             initOsm()
+            checkLocationEnabled()
         } else {
             pLauncher.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION))
         }
     }
+
+    private fun checkLocationEnabled() {
+        val lManager = activity?.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        val isEnabled = lManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
+        if (!isEnabled) {
+            DialogManager.showLocEnableDialog(
+                activity as AppCompatActivity,
+                object : DialogManager.Listener {
+                    override fun onClick() {
+                        startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
+                    }
+                }
+            )
+        }
+    }
+
 
     companion object {
 
