@@ -1,12 +1,15 @@
 package my.newapp.fsm.gpstracker.fragments
 
 import android.Manifest
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.location.LocationManager
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -17,8 +20,10 @@ import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.MutableLiveData
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import my.newapp.fsm.gpstracker.R
 import my.newapp.fsm.gpstracker.databinding.FragmentMainBinding
+import my.newapp.fsm.gpstracker.location.LocationModel
 import my.newapp.fsm.gpstracker.location.LocationService
 import my.newapp.fsm.gpstracker.utils.DialogManager
 import my.newapp.fsm.gpstracker.utils.TimeUtils
@@ -53,6 +58,7 @@ class MainFragment : Fragment() {
         setOnClicks()
         checkServiceState()
         updateTime()
+        registerLocReceiver()
     }
 
     private fun setOnClicks() = with(binding) {
@@ -210,6 +216,22 @@ class MainFragment : Fragment() {
                 }
             )
         }
+    }
+
+    private val receiver= object : BroadcastReceiver(){
+        override fun onReceive(context: Context?, i: Intent?) {
+            if (i?.action == LocationService.LOC_MODEL_INTENT){
+                val locModel =
+                    i.getSerializableExtra(LocationService.LOC_MODEL_INTENT) as LocationModel
+                Log.d("MyLog", "Dist - ${locModel.distance}")
+            }
+        }
+    }
+
+    private fun registerLocReceiver() {
+        val locFilter = IntentFilter(LocationService.LOC_MODEL_INTENT)
+        LocalBroadcastManager.getInstance(activity as AppCompatActivity)
+            .registerReceiver(receiver, locFilter)
     }
 
 
