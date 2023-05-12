@@ -19,8 +19,10 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.MutableLiveData
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import my.newapp.fsm.gpstracker.MainViewModel
 import my.newapp.fsm.gpstracker.R
 import my.newapp.fsm.gpstracker.databinding.FragmentMainBinding
 import my.newapp.fsm.gpstracker.location.LocationModel
@@ -39,9 +41,9 @@ class MainFragment : Fragment() {
     private var isServiceRunning = false
     private var timer: Timer? = null
     private var startTime = 0L
-    private val timeData = MutableLiveData<String>()
     private lateinit var binding: FragmentMainBinding
     private lateinit var pLauncher: ActivityResultLauncher<Array<String>>
+    private val model: MainViewModel by activityViewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -59,6 +61,7 @@ class MainFragment : Fragment() {
         checkServiceState()
         updateTime()
         registerLocReceiver()
+        locationUpdates()
     }
 
     private fun setOnClicks() = with(binding) {
@@ -74,8 +77,19 @@ class MainFragment : Fragment() {
         }
     }
 
+    private fun locationUpdates() = with(binding){
+        model.locationUpdates.observe(viewLifecycleOwner){
+            val distance = "Distance: ${String.format("%.1f", it.distance)} m"
+            val speed = "Speed: ${String.format("%.1f", 3.6f * it.speed)} km/h"
+            val aSpeed = "Average speed: ${getAverageSpeed(it.distance)} km/h"
+            tvDistance.text = distance
+            tvSpeed.text = speed
+            tvAverageSpeed.text = aSpeed
+        }
+    }
+
     private fun updateTime() {
-        timeData.observe(viewLifecycleOwner) {
+        model.timeData.observe(viewLifecycleOwner) {
             binding.tvTime.text = it
         }
     }
@@ -87,11 +101,20 @@ class MainFragment : Fragment() {
         timer?.schedule(object : TimerTask() {
             override fun run() {
                 activity?.runOnUiThread {
-                    timeData.value = getCurrentTime()
+                    model.timeData.value = getCurrentTime()
                 }
             }
 
         }, 1, 1)
+    }
+
+    private fun getAverageSpeed(distance: Float) : String {
+        return String
+            .format(
+                "%.1f",
+                3.6f *  (distance / ((System.currentTimeMillis() - startTime) /1000.0f))
+            )
+
     }
 
     private fun getCurrentTime(): String {
@@ -223,7 +246,7 @@ class MainFragment : Fragment() {
             if (i?.action == LocationService.LOC_MODEL_INTENT){
                 val locModel =
                     i.getSerializableExtra(LocationService.LOC_MODEL_INTENT) as LocationModel
-                Log.d("MyLog", "Dist - ${locModel.distance}")
+                model.locationUpdates.value = locModel
             }
         }
     }
