@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.graphics.Color
 import android.location.LocationManager
 import android.os.Build
 import android.os.Bundle
@@ -32,13 +33,18 @@ import my.newapp.fsm.gpstracker.utils.TimeUtils
 import my.newapp.fsm.gpstracker.utils.checkPermission
 import org.osmdroid.config.Configuration
 import org.osmdroid.library.BuildConfig
+import org.osmdroid.util.GeoPoint
+import org.osmdroid.views.overlay.Polygon
+import org.osmdroid.views.overlay.Polyline
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 import java.util.Timer
 import java.util.TimerTask
 
 class MainFragment : Fragment() {
+    private var pl: Polyline? = null
     private var isServiceRunning = false
+    private var firstStart = true
     private var timer: Timer? = null
     private var startTime = 0L
     private lateinit var binding: FragmentMainBinding
@@ -85,6 +91,7 @@ class MainFragment : Fragment() {
             tvDistance.text = distance
             tvSpeed.text = speed
             tvAverageSpeed.text = aSpeed
+            updatePolyline(it.geoPointsList)
         }
     }
 
@@ -164,6 +171,8 @@ class MainFragment : Fragment() {
     }
 
     private fun initOsm() = with(binding) {
+        pl = Polyline()
+        pl?.outlinePaint?.color = Color.BLUE
         map.controller.setZoom(20.0)
         val mLocProvider = GpsMyLocationProvider(activity)
         val mLocOverLay = MyLocationNewOverlay(mLocProvider, map)
@@ -172,6 +181,7 @@ class MainFragment : Fragment() {
         mLocOverLay.runOnFirstFix {
             map.overlays.clear()
             map.overlays.add(mLocOverLay)
+            map.overlays.add(pl)
         }
     }
 
@@ -256,6 +266,32 @@ class MainFragment : Fragment() {
         LocalBroadcastManager.getInstance(activity as AppCompatActivity)
             .registerReceiver(receiver, locFilter)
     }
+
+    private fun addPoints(list: List<GeoPoint>){
+        pl?.addPoint(list[list.size - 1])
+    }
+
+    private fun fillPolyline(list: List<GeoPoint>) {
+        list.forEach{
+            pl?.addPoint(it)
+        }
+    }
+
+    private fun updatePolyline(list: List<GeoPoint>){
+        if (list.size > 1 && firstStart){
+            fillPolyline(list)
+            firstStart = false
+        } else {
+            addPoints(list)
+        }
+    }
+
+    override fun onDetach() {
+        super.onDetach()
+        LocalBroadcastManager.getInstance(activity as AppCompatActivity)
+            .unregisterReceiver(receiver)
+    }
+
 
 
     companion object {
