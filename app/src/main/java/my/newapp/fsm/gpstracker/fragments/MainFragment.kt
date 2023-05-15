@@ -83,8 +83,8 @@ class MainFragment : Fragment() {
         }
     }
 
-    private fun locationUpdates() = with(binding){
-        model.locationUpdates.observe(viewLifecycleOwner){
+    private fun locationUpdates() = with(binding) {
+        model.locationUpdates.observe(viewLifecycleOwner) {
             val distance = "Distance: ${String.format("%.1f", it.distance)} m"
             val speed = "Speed: ${String.format("%.1f", 3.6f * it.speed)} km/h"
             val aSpeed = "Average speed: ${getAverageSpeed(it.distance)} km/h"
@@ -115,11 +115,11 @@ class MainFragment : Fragment() {
         }, 1, 1)
     }
 
-    private fun getAverageSpeed(distance: Float) : String {
+    private fun getAverageSpeed(distance: Float): String {
         return String
             .format(
                 "%.1f",
-                3.6f *  (distance / ((System.currentTimeMillis() - startTime) /1000.0f))
+                3.6f * (distance / ((System.currentTimeMillis() - startTime) / 1000.0f))
             )
 
     }
@@ -142,6 +142,12 @@ class MainFragment : Fragment() {
             activity?.stopService(Intent(activity, LocationService::class.java))
             binding.fStartStop.setImageResource(R.drawable.ic_play)
             timer?.cancel()
+            DialogManager.showSaveDialog(requireContext(), object : DialogManager.Listener{
+                override fun onClick() {
+                    
+                }
+
+            })
         }
         isServiceRunning = !isServiceRunning
     }
@@ -251,9 +257,9 @@ class MainFragment : Fragment() {
         }
     }
 
-    private val receiver= object : BroadcastReceiver(){
+    private val receiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, i: Intent?) {
-            if (i?.action == LocationService.LOC_MODEL_INTENT){
+            if (i?.action == LocationService.LOC_MODEL_INTENT) {
                 val locModel =
                     i.getSerializableExtra(LocationService.LOC_MODEL_INTENT) as LocationModel
                 model.locationUpdates.value = locModel
@@ -267,18 +273,18 @@ class MainFragment : Fragment() {
             .registerReceiver(receiver, locFilter)
     }
 
-    private fun addPoints(list: List<GeoPoint>){
+    private fun addPoints(list: List<GeoPoint>) {
         pl?.addPoint(list[list.size - 1])
     }
 
     private fun fillPolyline(list: List<GeoPoint>) {
-        list.forEach{
+        list.forEach {
             pl?.addPoint(it)
         }
     }
 
-    private fun updatePolyline(list: List<GeoPoint>){
-        if (list.size > 1 && firstStart){
+    private fun updatePolyline(list: List<GeoPoint>) {
+        if (list.size > 1 && firstStart) {
             fillPolyline(list)
             firstStart = false
         } else {
@@ -291,7 +297,6 @@ class MainFragment : Fragment() {
         LocalBroadcastManager.getInstance(activity as AppCompatActivity)
             .unregisterReceiver(receiver)
     }
-
 
 
     companion object {
