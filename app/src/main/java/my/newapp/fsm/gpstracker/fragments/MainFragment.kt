@@ -10,7 +10,6 @@ import android.location.LocationManager
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -21,11 +20,11 @@ import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.MutableLiveData
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import my.newapp.fsm.gpstracker.MainViewModel
 import my.newapp.fsm.gpstracker.R
 import my.newapp.fsm.gpstracker.databinding.FragmentMainBinding
+import my.newapp.fsm.gpstracker.db.TrackItem
 import my.newapp.fsm.gpstracker.location.LocationModel
 import my.newapp.fsm.gpstracker.location.LocationService
 import my.newapp.fsm.gpstracker.utils.DialogManager
@@ -34,7 +33,6 @@ import my.newapp.fsm.gpstracker.utils.checkPermission
 import org.osmdroid.config.Configuration
 import org.osmdroid.library.BuildConfig
 import org.osmdroid.util.GeoPoint
-import org.osmdroid.views.overlay.Polygon
 import org.osmdroid.views.overlay.Polyline
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
@@ -42,6 +40,7 @@ import java.util.Timer
 import java.util.TimerTask
 
 class MainFragment : Fragment() {
+    private var trackItem: TrackItem? = null
     private var pl: Polyline? = null
     private var isServiceRunning = false
     private var firstStart = true
@@ -91,6 +90,14 @@ class MainFragment : Fragment() {
             tvDistance.text = distance
             tvSpeed.text = speed
             tvAverageSpeed.text = aSpeed
+            trackItem = TrackItem(
+                null,
+                getCurrentTime(),
+                TimeUtils.getDate(),
+                String.format("%.1f", it.distance / 1000),
+                getAverageSpeed(it.distance),
+                ""
+            )
             updatePolyline(it.geoPointsList)
         }
     }
@@ -142,7 +149,10 @@ class MainFragment : Fragment() {
             activity?.stopService(Intent(activity, LocationService::class.java))
             binding.fStartStop.setImageResource(R.drawable.ic_play)
             timer?.cancel()
-            DialogManager.showSaveDialog(requireContext(), object : DialogManager.Listener{
+            DialogManager.showSaveDialog(
+                requireContext(),
+                trackItem,
+                object : DialogManager.Listener{
                 override fun onClick() {
                     
                 }
