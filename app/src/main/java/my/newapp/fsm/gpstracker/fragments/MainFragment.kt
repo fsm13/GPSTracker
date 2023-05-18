@@ -21,6 +21,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import my.newapp.fsm.gpstracker.MainApp
 import my.newapp.fsm.gpstracker.MainViewModel
 import my.newapp.fsm.gpstracker.R
 import my.newapp.fsm.gpstracker.databinding.FragmentMainBinding
@@ -48,7 +49,9 @@ class MainFragment : Fragment() {
     private var startTime = 0L
     private lateinit var binding: FragmentMainBinding
     private lateinit var pLauncher: ActivityResultLauncher<Array<String>>
-    private val model: MainViewModel by activityViewModels()
+    private val model: MainViewModel by activityViewModels{
+        MainViewModel.ViewModelFactory((requireContext().applicationContext as MainApp).database)
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -67,6 +70,9 @@ class MainFragment : Fragment() {
         updateTime()
         registerLocReceiver()
         locationUpdates()
+        model.tracks.observe(viewLifecycleOwner){
+
+        }
     }
 
     private fun setOnClicks() = with(binding) {
@@ -150,12 +156,13 @@ class MainFragment : Fragment() {
             activity?.stopService(Intent(activity, LocationService::class.java))
             binding.fStartStop.setImageResource(R.drawable.ic_play)
             timer?.cancel()
+            val track = getTrackItem()
             DialogManager.showSaveDialog(
                 requireContext(),
-                getTrackItem(),
+                track,
                 object : DialogManager.Listener {
                     override fun onClick() {
-
+                        model.insertTrack(track)
                     }
 
                 })
